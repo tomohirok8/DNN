@@ -2,10 +2,9 @@ from keras.datasets import mnist
 from keras.datasets import fashion_mnist
 import numpy as np
 import matplotlib.pyplot as plt
-from keras.layers import Input, Reshape, Dense, Flatten, Activation, Conv2D, UpSampling2D, BatchNormalization
-from keras.models import Model
-from keras.layers import Dropout, LeakyReLU
+from keras.layers import Input, Reshape, Dense, Dropout, Flatten, Activation, LeakyReLU, Conv2D, UpSampling2D, BatchNormalization
 from keras.optimizers import Adam
+from keras.models import Model
 from tqdm import tqdm
 
 
@@ -127,7 +126,7 @@ def train(step=3000, BATCH_SIZE=128):
         # y = (バッチサイズ分のTrue(本物), バッチサイズ分のFalse(偽物))
         y = np.zeros([2*BATCH_SIZE,2])
         y[:BATCH_SIZE,1] = 1
-        y[BATCH_SIZE:,0] = 1      
+        y[BATCH_SIZE:,0] = 1
         
         # Discriminatorのtrain
         discriminator.train_on_batch(X,y)
@@ -145,22 +144,25 @@ def train(step=3000, BATCH_SIZE=128):
         y2 = np.zeros([BATCH_SIZE,2])
         y2[:,1] = 1
         
-        # Generatorのtrain
+        # GeneratorÌtrain
         GAN.train_on_batch(noise_gen, y2 )
 
 
 # データのロード
-X_train, _,_,_ = load_mnist()
+X_train, _,_,_ = load_mnist(data='fashion')
 # それぞれのネットワークのインスタンスを生成
 generator = Generator()
 discriminator = Discriminator(X_train.shape[1:])
 make_trainable(discriminator, False)
 GAN = combined_network(generator, discriminator)
 
-# train関数で学習を行うstepを大きくすると学習をより多く行います
 train()
 
 plot_mnist()
+
+
+
+
 
 
 
