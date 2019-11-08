@@ -2,10 +2,9 @@ from keras.datasets import mnist
 from keras.datasets import fashion_mnist
 import numpy as np
 import matplotlib.pyplot as plt
-from keras.layers import Input, concatenate, Reshape, Dense, Activation, Conv2D, UpSampling2D, BatchNormalization
-from keras.models import Model
-from keras.layers import Lambda, Dropout, Flatten, LeakyReLU
+from keras.layers import Input, concatenate, Lambda, Reshape, Dense, Dropout, Flatten, Activation, LeakyReLU, Conv2D, UpSampling2D, BatchNormalization
 from keras.optimizers import Adam
+from keras.models import Model
 from keras import backend as K
 from tqdm import tqdm
 
@@ -51,9 +50,7 @@ def plot_mnist_conditional(n_ex=10,dim=(2, 5), figsize=(8,4), labels=range(10)):
 
 
 def Generator():
-    
     nch=200
-    ## 1章のGANとの違い ##
     # ランダムなノイズ
     model_input = Input(shape=[100])
     # 0~9のどの数字の画像かのラベル情報
@@ -79,10 +76,7 @@ def Generator():
     
     return model
 
-
 def Discriminator(shape, dropout_rate=0.25, opt=Adam(lr=1e-4)):
-    
-    ## 1章のGANとの違い ##
     model_input = Input(shape=shape)
     cond = Input(shape=[10])
     
@@ -112,7 +106,6 @@ def Discriminator(shape, dropout_rate=0.25, opt=Adam(lr=1e-4)):
     
     return model
 
-
 def combined_network(generator, discriminator, opt=Adam(lr=1e-3)):
     gan_input = Input(shape=[100])
     cond = Input(shape=[10])
@@ -129,9 +122,9 @@ def make_trainable(net, val):
     net.trainable = val
     for l in net.layers:
         l.trainable = val
+        
 
-
-def train(step=3000, BATCH_SIZE=128):
+def train(step=10000, BATCH_SIZE=128):
 
     for e in tqdm(range(step)):  
         
@@ -150,7 +143,6 @@ def train(step=3000, BATCH_SIZE=128):
         
         label_batch = np.concatenate((label_batch, label_batch))
         
-        
         discriminator.train_on_batch([X, label_batch], y)
         
         make_trainable(discriminator,False)
@@ -160,12 +152,12 @@ def train(step=3000, BATCH_SIZE=128):
         y2[:,1] = 1
         
         label_batch2 = np.random.randint(0, 10, size=BATCH_SIZE)
-        label_batch2 = np.eye(10)[label_batch2]
-             
+        label_batch2 = np.eye(10)[label_batch2]    
+        
         GAN.train_on_batch([noise_tr, label_batch2], y2 )
 
 
-X_train, _, y_train, _ = load_mnist()
+X_train, _, y_train, _ = load_mnist(data='fashion')
 generator = Generator()
 discriminator = Discriminator(X_train.shape[1:])
 make_trainable(discriminator, False)
@@ -174,4 +166,5 @@ GAN = combined_network(generator, discriminator)
 train()
 
 plot_mnist_conditional()
+plot_mnist_conditional(labels=['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot'])
 
