@@ -7,7 +7,7 @@ if int(tf.__version__.split('.')[0]) >= 2:
     from tensorflow import keras
 else:
     import keras
-from keras.layers import Input, Embedding, Dense, LSTM, Bidirectional, Flatten, concatenate
+from keras.layers import Input, Embedding, Dense, LSTM, Bidirectional, Dropout, concatenate
 from keras.models import Model
 from keras.callbacks import EarlyStopping
 from keras_self_attention import SeqSelfAttention
@@ -51,17 +51,21 @@ embedded = Embedding(vocab_size, vocab_dim, mask_zero=True, name='embedding')(in
 # shape: (seqX_len,)->(seqX_len, vocab_size)
 
 # EmbeddingレイヤーとLSTMレイヤーを接続、LSTMレイヤーをインスタンス化
-encoded = Bidirectional(LSTM(256, return_sequences=True))(embedded)
+lstm_bi1 = Bidirectional(LSTM(256, return_sequences=True, name='LSTM1'), name='bidirectional1')(embedded)
 # shape: (seqX_len, vocab_size)->(256, 512)
 
 # LSTMレイヤーとSeqSelfAttentionレイヤーとLSTMレイヤーを接続
-encoded = SeqSelfAttention(name='attention')(encoded)
+attention1 = SeqSelfAttention(name='attention1')(lstm_bi1)
+
+drop1 = Dropout(0.2, name="drop1")(attention1)
 
 # SeqSelfAttentionレイヤーを接続
-encoded = Bidirectional(LSTM(128))(encoded)
+lstm_bi2 = Bidirectional(LSTM(128, name='LSTM2'), name='bidirectional2')(drop1)
 # shape: (256, 512)->(256, 256)
 
-outputs = Dense(1, activation='sigmoid')(encoded)
+drop2 = Dropout(0.2, name="drop2")(lstm_bi2)
+
+outputs = Dense(1, activation='sigmoid', name='output')(drop2)
 
 # モデル構築（入力はEncoderとDecoder、出力はDecoderのみ）
 model = Model(inputs=inputs, outputs=outputs)
@@ -96,13 +100,13 @@ model.summary()
 history = model.fit(x_train,
                     y_train,
                     epochs=20,
-                    batch_size=512,
+                    batch_size=128,
                     validation_data=(x_vali, y_vali),
                     verbose=1,
                     callbacks=[EarlyStopping(patience=5, monitor='val_acc', mode='max')])
 
 
-
+# acc,lossの経過
 history_dict = history.history
 history_dict.keys()
  
